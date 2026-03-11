@@ -29,23 +29,31 @@ def load_sample_backtest():
     import numpy as np
     from datetime import datetime, timedelta
 
-    # Create sample data
+    # Create sample data with FIXED seed for consistency
+    np.random.seed(42)  # Reproducible results
+    
     dates = pd.date_range('2023-01-01', '2025-12-31', freq='D')
     n = len(dates)
 
-    # Generate realistic equity curve
-    returns = np.random.normal(0.0005, 0.015, n)
+    # Generate realistic equity curve (8.5% return, ~0.18 Sharpe)
+    returns = np.random.normal(0.00033, 0.0095, n)  # ~8.5% annual return
     equity_curve = (1 + returns).cumprod() * 1_000_000
 
+    # Calculate metrics correctly
+    total_return = (equity_curve[-1] / equity_curve[0] - 1) * 100
+    annual_returns = total_return / 3  # 3 years of data
+    sharpe = (np.mean(returns) / np.std(returns) * np.sqrt(252)) if np.std(returns) > 0 else 0
+    
+    running_max = pd.Series(equity_curve).expanding().max()
+    drawdown_pct = ((running_max - equity_curve) / running_max * 100)
+    max_drawdown = drawdown_pct.max()
+
     performance_metrics = {
-        'total_return': float((equity_curve[-1] / equity_curve[0] - 1) * 100),
-        'sharpe_ratio': float(np.mean(returns) / np.std(returns) * np.sqrt(252)),
-        'max_drawdown': float(
-            ((np.minimum.accumulate(equity_curve) - equity_curve) / 
-             np.minimum.accumulate(equity_curve)).min() * 100
-        ),
+        'total_return': float(total_return),
+        'sharpe_ratio': float(sharpe),
+        'max_drawdown': float(max_drawdown),
         'win_rate': float(np.mean(returns > 0) * 100),
-        'best_month': float(returns.sum() * 100),
+        'best_month': float(returns.max() * 100),
         'worst_month': float(returns.min() * 100),
     }
 
@@ -187,7 +195,7 @@ def create_dashboard():
     """Build the Dash app."""
     app = Dash(__name__)
 
-    # Load sample data for demo
+    # Load sample data for demo (fixed seed = consistent metrics)
     data = load_sample_backtest()
 
     app.layout = html.Div([
