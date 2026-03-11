@@ -122,33 +122,47 @@ class BacktestEngine:
 
         current_weights = pd.Series(0.0, index=assets)
 
+        # Pre-convert rebalance dates to a set for O(1) lookup
+        rebalance_set = set(rebalance_dates.values)
+
+        # Build equity curve incrementally (avoid rebuilding dict each rebalance)
+        equity_dates = []
+        equity_vals = []
+
+        # Max lookback for signals/returns passed to aggregator (prevents growing slices)
+        AGG_LOOKBACK = 300  # ~1.2 years of trading days
+
         for i, date in enumerate(dates):
             current_prices = prices.loc[date]
 
             # Record equity
             port_value = self.execution_engine.get_portfolio_value(current_prices)
             equity_values.append({"date": date, "equity": port_value})
+            equity_dates.append(date)
+            equity_vals.append(port_value)
 
-            is_rebalance = date in rebalance_dates.values
+            is_rebalance = date in rebalance_set
             trade_info = None
 
             # Rebalance if scheduled
             if is_rebalance:
-                # Get signals for this date (use data up to this date only)
+                # Get signals for this date — only recent lookback, not full history
                 date_signals = {}
                 for name, sig_df in all_signals.items():
                     if date in sig_df.index:
-                        date_signals[name] = sig_df.loc[:date]
+                        date_idx = sig_df.index.get_loc(date)
+                        start_idx = max(0, date_idx - AGG_LOOKBACK + 1)
+                        date_signals[name] = sig_df.iloc[start_idx:date_idx + 1]
 
                 if date_signals:
-                    # Aggregate signals
+                    # Aggregate signals — pass only recent returns
                     try:
-                        current_signals = {}
-                        for name, sig_df in date_signals.items():
-                            current_signals[name] = sig_df
+                        ret_end = returns.index.get_loc(date)
+                        ret_start = max(0, ret_end - AGG_LOOKBACK + 1)
+                        recent_returns = returns.iloc[ret_start:ret_end + 1]
 
                         combined = self.signal_aggregator.aggregate(
-                            current_signals, returns.loc[:date]
+                            date_signals, recent_returns
                         )
                         signal_row = combined.iloc[-1]
                     except Exception as e:
@@ -156,7 +170,7 @@ class BacktestEngine:
                         signal_row = None
 
                     if signal_row is not None:
-                        # Estimate covariance from recent returns
+                        # Estimate covariance from recent returns (already bounded)
                         lookback_returns = returns.loc[:date].iloc[-252:]
                         if len(lookback_returns) >= 60:
                             cov_matrix = PortfolioOptimizer.estimate_covariance(
@@ -175,9 +189,9 @@ class BacktestEngine:
                                 target_weights = None
 
                             if target_weights is not None:
-                                # Risk checks
+                                # Risk checks — use incrementally built equity curve
                                 equity_curve_so_far = pd.Series(
-                                    {e["date"]: e["equity"] for e in equity_values}
+                                    equity_vals, index=equity_dates
                                 )
                                 target_weights = self.risk_manager.check_and_adjust(
                                     target_weights, lookback_returns, equity_curve_so_far

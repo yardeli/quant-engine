@@ -146,25 +146,36 @@ class SignalAggregator:
         """
         Compute rolling Information Coefficient.
         IC = Spearman rank correlation between signal and next-period returns.
+
+        Only computes over the last `max_compute` rows for performance.
         """
-        # Shift signals forward by 1 to align with next-day returns
+        from scipy.stats import spearmanr
+
+        # Only compute IC over the most recent portion to avoid O(n) blowup
+        max_compute = 126  # ~6 months is plenty for IC estimation
+        n = len(signals)
+        compute_start = max(window, n - max_compute)
+
         shifted_sig = signals.shift(1)
         ics = []
 
-        for i in range(window, len(signals)):
+        for i in range(compute_start, n):
             sig_row = shifted_sig.iloc[i]
-            ret_row = returns.iloc[i]
+            ret_idx = signals.index[i]
+            if ret_idx not in returns.index:
+                ics.append(0.0)
+                continue
+            ret_row = returns.loc[ret_idx]
             valid = sig_row.notna() & ret_row.notna()
             if valid.sum() < 5:
                 ics.append(0.0)
                 continue
 
-            from scipy.stats import spearmanr
             corr, _ = spearmanr(sig_row[valid], ret_row[valid])
             ics.append(corr if not np.isnan(corr) else 0.0)
 
         # Pad the beginning
         ic_series = pd.Series(
-            [0.0] * window + ics, index=signals.index
+            [0.0] * compute_start + ics, index=signals.index
         )
         return ic_series
