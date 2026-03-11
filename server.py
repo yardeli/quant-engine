@@ -89,6 +89,7 @@ engine_state = {
         "total_return": 0, "ann_return": 0, "ann_vol": 0,
         "sharpe": 0, "max_dd": 0, "current_dd": 0, "win_rate": 0,
     },
+    "brain_export": None,
 }
 engine_lock = threading.Lock()
 
@@ -362,11 +363,23 @@ def _run_backtest(config_overrides: dict):
             "risk_history": result.risk_metrics_history[-50:] if result.risk_metrics_history else [],
         }
 
+        # Export brain for paper-trader-v4
+        try:
+            brain_data = engine.export_brain(result)
+            logger.info(
+                f"Brain exported: {len(brain_data['strategies'])} strategies, "
+                f"regime={brain_data['regime']['type']}"
+            )
+        except Exception as e:
+            logger.warning(f"Brain export failed: {e}")
+            brain_data = None
+
         with engine_lock:
             engine_state["status"] = "complete"
             engine_state["progress"] = 100
             engine_state["progress_msg"] = "Complete"
             engine_state["result"] = final_result
+            engine_state["brain_export"] = brain_data
             engine_state["elapsed"] = round(time.time() - engine_state["start_time"], 1)
 
         logger.info(f"Backtest complete in {engine_state['elapsed']}s")
@@ -460,6 +473,15 @@ def api_defaults():
             "ou_mean_reversion", "pairs_trading", "ml_alpha",
         ],
     })
+
+
+@app.route("/api/brain")
+def api_brain():
+    """Get the brain export (for paper-trader-v4 integration)."""
+    with engine_lock:
+        if engine_state["brain_export"] is None:
+            return jsonify({"error": "No brain export available. Run a backtest first."}), 404
+        return jsonify(engine_state["brain_export"])
 
 
 if __name__ == "__main__":

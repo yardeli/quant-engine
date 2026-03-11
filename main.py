@@ -219,6 +219,16 @@ def main():
         dashboard=dashboard,
     )
 
+    # Export brain for paper-trader-v4
+    try:
+        brain_data = engine.export_brain(result)
+        logger.info(
+            f"Brain exported: {len(brain_data['strategies'])} strategies, "
+            f"regime={brain_data['regime']['type']}"
+        )
+    except Exception as e:
+        logger.warning(f"Brain export failed: {e}")
+
     # Save chart if matplotlib is available
     if not use_ui:
         try:

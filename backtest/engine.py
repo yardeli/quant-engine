@@ -17,8 +17,11 @@ Hedge Fund Usage:
     - Monte Carlo permutation tests verify statistical significance.
     - Realistic transaction costs separate paper alpha from real alpha.
 """
+import json
 import logging
+import os
 from dataclasses import dataclass
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -352,3 +355,162 @@ class BacktestEngine:
         print(f"  Total Turnover:      {ex['total_turnover']:>10.2f}x")
         print(f"  Rebalances:          {ex['n_rebalances']:>10d}")
         print("=" * 60 + "\n")
+
+    def export_brain(
+        self,
+        result: "BacktestResult",
+        output_path: str | None = None,
+    ) -> dict:
+        """
+        Export backtest knowledge as a brain_export.json compatible with
+        paper-trader-v4.html's adaptive brain system.
+
+        Maps quant-engine model performance → paper-trader strategy weights
+        so the live trader starts pre-trained instead of blank.
+        """
+        perf = result.performance_metrics
+        model_weights = self.signal_aggregator.model_weights or {}
+
+        # ── Map QE models → paper-trader strategies ──────────────
+        # QE models: ts_momentum, xs_momentum, momentum_vol_break,
+        #            ou_mean_reversion, pairs_trading, ml_alpha
+        # Paper-trader: RSI, MA, Momentum, MeanRev, VWAP, Composite,
+        #               Stochastic, Bollinger
+        #
+        # Mapping logic:
+        #   ts_momentum     → Momentum (time-series trend following)
+        #   xs_momentum     → Composite (cross-sectional = multi-factor)
+        #   momentum_vol_break → MA (trend + vol regime = MA crossover style)
+        #   ou_mean_reversion  → MeanRev, RSI, Bollinger (mean reversion family)
+        #   pairs_trading      → Stochastic (relative value / oversold)
+        #   ml_alpha           → VWAP, Composite (nonlinear multi-factor)
+
+        qe_to_pt = {
+            "Momentum": ["ts_momentum"],
+            "MA": ["momentum_vol_break"],
+            "Composite": ["xs_momentum", "ml_alpha"],
+            "MeanRev": ["ou_mean_reversion"],
+            "RSI": ["ou_mean_reversion"],
+            "Bollinger": ["ou_mean_reversion"],
+            "Stochastic": ["pairs_trading"],
+            "VWAP": ["ml_alpha"],
+        }
+
+        strategy_weights = {}
+        for pt_strat, qe_models in qe_to_pt.items():
+            # Average the QE model weights that map to this strategy
+            weights = [model_weights.get(m, 0) for m in qe_models]
+            avg_w = sum(weights) / len(weights) if weights else 0
+            # Floor at 0.15 so no strategy is completely dead
+            strategy_weights[pt_strat] = max(avg_w, 0.15)
+
+        # Normalize so average weight = 1.0
+        if strategy_weights:
+            mean_w = sum(strategy_weights.values()) / len(strategy_weights)
+            if mean_w > 0:
+                strategy_weights = {
+                    k: round(max(0.3, v / mean_w), 4)
+                    for k, v in strategy_weights.items()
+                }
+
+        # ── Derive regime from backtest performance ──────────────
+        # If Sharpe > 0.5, trending worked; if mean_rev models dominate, choppy
+        mr_weight = model_weights.get("ou_mean_reversion", 0)
+        mom_weight = sum(
+            model_weights.get(m, 0)
+            for m in ["ts_momentum", "xs_momentum", "momentum_vol_break"]
+        )
+        total_w = mr_weight + mom_weight
+        if total_w > 0:
+            trend_pct = mom_weight / total_w
+        else:
+            trend_pct = 0.5
+
+        if trend_pct > 0.6:
+            regime = "trending"
+        elif trend_pct < 0.4:
+            regime = "choppy"
+        else:
+            regime = "mixed"
+
+        # ── Derive risk thresholds from backtest ─────────────────
+        sharpe = perf.get("sharpe_ratio", 0)
+        max_dd = abs(perf.get("max_drawdown", 0))
+        win_rate = perf.get("win_rate", 0.5)
+
+        # If backtest had strong performance, start more aggressive
+        if sharpe > 0.8:
+            sl_mult, tp_mult, entry_mult = 1.1, 1.15, 0.85
+        elif sharpe > 0.4:
+            sl_mult, tp_mult, entry_mult = 1.05, 1.05, 0.95
+        elif sharpe < 0:
+            sl_mult, tp_mult, entry_mult = 0.9, 0.9, 1.1
+        else:
+            sl_mult, tp_mult, entry_mult = 1.0, 1.0, 1.0
+
+        # ── Build the brain export ───────────────────────────────
+        strategies = {}
+        for strat, weight in strategy_weights.items():
+            strategies[strat] = {
+                "weight": weight,
+                "winRate": round(win_rate, 4),
+                "avgPnl": 0,
+                "avgPnlPct": round(perf.get("annualized_return", 0) / 252, 6),
+                "trades": 0,  # Will be filled by live trading
+                "recentResults": [],
+            }
+
+        # Get ML feature importance if available
+        feature_importance = {}
+        for model in getattr(self, '_alpha_models', []):
+            if hasattr(model, 'get_feature_importance'):
+                feature_importance = model.get_feature_importance()
+                break
+
+        brain_export = {
+            "version": 1,
+            "exported_at": datetime.now().isoformat(),
+            "source": "quant-engine-backtest",
+            "backtest_summary": {
+                "total_return": round(perf.get("total_return", 0), 6),
+                "annualized_return": round(perf.get("annualized_return", 0), 6),
+                "sharpe_ratio": round(sharpe, 4),
+                "sortino_ratio": round(perf.get("sortino_ratio", 0), 4),
+                "max_drawdown": round(perf.get("max_drawdown", 0), 6),
+                "win_rate": round(win_rate, 4),
+                "profit_factor": round(perf.get("profit_factor", 0), 4),
+                "trading_days": perf.get("n_trading_days", 0),
+            },
+            "model_weights_raw": {
+                k: round(v, 6) for k, v in model_weights.items()
+            },
+            "strategies": strategies,
+            "thresholds": {
+                "slMult": round(sl_mult, 4),
+                "tpMult": round(tp_mult, 4),
+                "entryMult": round(entry_mult, 4),
+            },
+            "regime": {
+                "type": regime,
+                "confidence": round(abs(trend_pct - 0.5) * 2, 4),
+                "history": [],
+            },
+            "feature_importance": {
+                k: round(v, 6) for k, v in list(feature_importance.items())[:20]
+            },
+            "streak": {"current": 0, "type": None},
+            "learningEnabled": True,
+            "totalLearningTrades": 0,
+            "lastSaved": None,
+        }
+
+        # Save to file
+        if output_path is None:
+            output_path = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)), "brain_export.json"
+            )
+        with open(output_path, "w") as f:
+            json.dump(brain_export, f, indent=2)
+
+        logger.info(f"Brain exported to {output_path}")
+        return brain_export
