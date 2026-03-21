@@ -117,8 +117,14 @@ class SignalAggregator:
         for name, sig in signals.items():
             # Compute rolling IC: rank correlation of signal vs next-day returns
             rolling_ic = self._compute_rolling_ic(sig, returns)
-            # Use mean IC over lookback as the weight
-            recent_ic = rolling_ic.iloc[-self.ic_lookback:].mean()
+            # Use exponentially-weighted mean IC (recent IC matters more)
+            recent_ics = rolling_ic.iloc[-self.ic_lookback:]
+            if len(recent_ics) > 0:
+                weights = np.exp(np.linspace(-2, 0, len(recent_ics)))  # Exp decay
+                weights /= weights.sum()
+                recent_ic = (recent_ics.values * weights).sum()
+            else:
+                recent_ic = 0.0
             ics[name] = max(recent_ic, 0.0)  # Don't give negative weight
 
         total_ic = sum(ics.values())
