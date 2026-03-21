@@ -41,7 +41,7 @@ class FeatureConfig:
 class AlphaConfig:
     # Time-series momentum
     momentum_fast: int = 10
-    momentum_slow: int = 63
+    momentum_slow: int = 42
     momentum_vol_target: float = 0.10  # 10% annualized vol target
 
     # Mean reversion
