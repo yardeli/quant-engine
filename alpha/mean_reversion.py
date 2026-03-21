@@ -119,15 +119,31 @@ class PairsTrading(AlphaModel):
         if n < 2:
             return signals
 
-        # Test all pairs for cointegration using a rolling window
+        # Test pairs for cointegration, preferring same-sector pairs
         formation = self.config.stat_arb_formation_period
         pairs = []
+
+        # Sector groupings for better pair matching
+        sectors = {
+            "SPY": "idx", "QQQ": "idx", "IWM": "idx", "EFA": "idx", "EEM": "idx",
+            "TLT": "fi", "IEF": "fi", "HYG": "fi", "LQD": "fi",
+            "GLD": "cmd", "SLV": "cmd", "USO": "cmd", "DBA": "cmd",
+            "AAPL": "tech", "MSFT": "tech", "NVDA": "tech", "GOOGL": "tech",
+            "AMZN": "tech", "META": "tech", "TSLA": "tech",
+            "JPM": "fin", "GS": "fin", "BAC": "fin",
+            "XOM": "energy", "CVX": "energy",
+        }
 
         # Use the last formation_period of data for pair identification
         recent_prices = prices.iloc[-formation:]
 
-        for i in range(min(n, 15)):  # Limit pairs search for performance
+        # Prioritize same-sector pairs, then cross-sector
+        for i in range(min(n, 15)):
             for j in range(i + 1, min(n, 15)):
+                a_sector = sectors.get(assets[i], "other")
+                b_sector = sectors.get(assets[j], "other")
+                if a_sector != b_sector:
+                    continue  # Only same-sector pairs
                 a, b = assets[i], assets[j]
                 pa = recent_prices[a].dropna()
                 pb = recent_prices[b].dropna()
