@@ -251,7 +251,7 @@ class PortfolioOptimizer:
         return weights
 
     @staticmethod
-    def _shrink_covariance(sigma: np.ndarray, shrinkage: float = 0.1) -> np.ndarray:
+    def _shrink_covariance(sigma: np.ndarray, shrinkage: float = 0.2) -> np.ndarray:
         """
         Ledoit-Wolf-style shrinkage toward diagonal.
         Improves conditioning of the covariance matrix.
