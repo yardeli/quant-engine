@@ -43,8 +43,13 @@ class TimeSeriesMomentum(AlphaModel):
         fast_ret = prices.pct_change(self.config.momentum_fast)
         slow_ret = prices.pct_change(self.config.momentum_slow)
 
-        # Blend fast and slow signals (fast captures recent trend, slow captures persistent trend)
-        blended = 0.5 * np.sign(fast_ret) + 0.5 * np.sign(slow_ret)
+        # Blend fast and slow signals using continuous returns (not sign)
+        # Normalize by rolling std to get z-score-like signals
+        fast_vol = returns.rolling(self.config.momentum_fast).std() * np.sqrt(self.config.momentum_fast)
+        slow_vol = returns.rolling(self.config.momentum_slow).std() * np.sqrt(self.config.momentum_slow)
+        fast_z = fast_ret / (fast_vol + 1e-8)
+        slow_z = slow_ret / (slow_vol + 1e-8)
+        blended = 0.5 * fast_z.clip(-2, 2) + 0.5 * slow_z.clip(-2, 2)
 
         # Volatility scaling: target a specific vol per asset
         realized_vol = returns.rolling(63).std() * np.sqrt(252)
