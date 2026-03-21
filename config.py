@@ -46,7 +46,7 @@ class AlphaConfig:
 
     # Mean reversion
     mean_rev_halflife: int = 21
-    mean_rev_entry_z: float = 1.5
+    mean_rev_entry_z: float = 1.0
     mean_rev_exit_z: float = 0.5
 
     # Statistical arbitrage
