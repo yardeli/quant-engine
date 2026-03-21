@@ -83,12 +83,14 @@ class MLAlpha(AlphaModel):
         train_window = self.config.ml_train_window
         # Scale retrain frequency with universe size to prevent hanging
         n_assets = len(prices.columns)
-        retrain_freq = max(self.config.ml_retrain_frequency, n_assets * 3)
+        retrain_freq = max(self.config.ml_retrain_frequency, n_assets * 5)
 
-        # Model complexity scales with universe
+        # Reduce model complexity for large universes
         n_estimators = self.config.ml_n_estimators
-        if n_assets > 20:
+        if n_assets > 10:
             n_estimators = min(n_estimators, 100)
+        if n_assets > 20:
+            n_estimators = min(n_estimators, 50)
 
         # Walk-forward: train on past, predict on present
         for i, date in enumerate(dates):
