@@ -75,7 +75,7 @@ class AlphaConfig:
 @dataclass
 class PortfolioConfig:
     # Optimization method: 'mean_variance', 'risk_parity', 'black_litterman', 'equal_weight'
-    method: str = "black_litterman"
+    method: str = "mean_variance"
     # Constraints
     max_position_size: float = 0.20  # 15% max in any single name
     max_sector_weight: float = 0.40
@@ -90,7 +90,7 @@ class PortfolioConfig:
 @dataclass
 class RiskConfig:
     # Drawdown limits
-    max_drawdown: float = 0.20  # 20% max drawdown (de-risking starts at 10%)
+    max_drawdown: float = 0.25  # 25% max drawdown (de-risking starts at 12.5%)
 
     # VaR limits
     var_confidence: float = 0.99
