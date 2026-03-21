@@ -82,7 +82,7 @@ class PortfolioConfig:
     max_gross_leverage: float = 1.5
     max_net_leverage: float = 0.6  # Allow more directional exposure
     turnover_penalty: float = 0.005  # 50bps turnover cost
-    risk_aversion: float = 1.25  # Lambda for mean-variance optimization
+    risk_aversion: float = 1.5  # Lambda for mean-variance optimization
     # Rebalance frequency (trading days)
     rebalance_frequency: int = 10
 
