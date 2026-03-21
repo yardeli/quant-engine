@@ -51,7 +51,8 @@ class OUMeanReversion(AlphaModel):
             # Estimate OU half-life using regression:
             # delta_x = alpha + beta * x_{t-1} + epsilon
             # half_life = -ln(2) / beta
-            lookback = min(len(series), 252)
+            # Use 126-day lookback (more adaptive to regime changes)
+            lookback = min(len(series), 126)
             y = series.diff().iloc[-lookback:]
             x = series.shift(1).iloc[-lookback:]
             valid = y.notna() & x.notna()
