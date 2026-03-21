@@ -118,6 +118,24 @@ class MomentumWithVolBreak(AlphaModel):
         # Scale down when vol is elevated (smooth scaling, not binary)
         vol_brake = (1.0 / vol_ratio).clip(0.2, 1.0)
 
-        signals = base_signal * vol_brake
+        # Correlation crash filter: measure average cross-asset correlation
+        # When correlations spike, momentum tends to crash
+        rolling_corr = returns.rolling(21).corr()
+        # Get mean pairwise correlation per date
+        n_assets = len(returns.columns)
+        if n_assets > 1:
+            avg_corr = rolling_corr.groupby(level=0).apply(
+                lambda x: (x.values.sum() - n_assets) / (n_assets * (n_assets - 1))
+                if x.shape[0] == n_assets else 0.5
+            )
+            # Normal correlation ~0.3, crisis ~0.7+
+            # Scale down when correlation is abnormally high
+            corr_brake = pd.DataFrame(1.0, index=returns.index, columns=returns.columns)
+            for col in returns.columns:
+                corr_brake[col] = (0.6 / (avg_corr + 1e-8)).clip(0.3, 1.0)
+        else:
+            corr_brake = 1.0
+
+        signals = base_signal * vol_brake * corr_brake
 
         return self._clip_signals(signals)
