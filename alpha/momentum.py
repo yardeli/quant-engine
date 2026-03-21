@@ -78,23 +78,12 @@ class CrossSectionalMomentum(AlphaModel):
     def generate_signals(self, data: DataFeed, features: dict[str, pd.DataFrame]) -> pd.DataFrame:
         prices = data.prices
 
-        # Multi-horizon momentum: blend 12-1, 6-1, and 3-1 month lookbacks
-        ret_1m = prices.pct_change(21)
-
+        # 12-1 momentum: 12-month return, skip most recent month
         ret_12m = prices.pct_change(252)
-        mom_12_1 = ret_12m - ret_1m  # 12-1 momentum
+        ret_1m = prices.pct_change(21)
+        momentum_signal = ret_12m - ret_1m  # 12-1 momentum
 
-        ret_6m = prices.pct_change(126)
-        mom_6_1 = ret_6m - ret_1m    # 6-1 momentum
-
-        ret_3m = prices.pct_change(63)
-        mom_3_1 = ret_3m - ret_1m    # 3-1 momentum
-
-        # Blend with higher weight on medium-term (most robust empirically)
-        momentum_signal = 0.25 * self._rank_normalize(mom_12_1) + \
-                         0.50 * self._rank_normalize(mom_6_1) + \
-                         0.25 * self._rank_normalize(mom_3_1)
-
+        # Cross-sectional rank normalization
         signals = self._rank_normalize(momentum_signal)
 
         return self._clip_signals(signals)
