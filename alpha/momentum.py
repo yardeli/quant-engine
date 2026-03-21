@@ -46,20 +46,12 @@ class TimeSeriesMomentum(AlphaModel):
         # Blend fast and slow signals (fast captures recent trend, slow captures persistent trend)
         blended = 0.5 * np.sign(fast_ret) + 0.5 * np.sign(slow_ret)
 
-        # Trend strength filter: suppress signals when trend is weak
-        # Use absolute return magnitude relative to volatility as trend strength
-        abs_ret = prices.pct_change(self.config.momentum_slow).abs()
-        threshold = returns.rolling(self.config.momentum_slow).std() * np.sqrt(self.config.momentum_slow)
-        trend_strength = (abs_ret / (threshold + 1e-8)).clip(0, 2.0)
-        # Scale: 0 when no trend, 1 when trend = 1 std dev, capped at 2
-        trend_filter = trend_strength.clip(0.3, 1.5) / 1.5  # Min 20% signal, max 100%
-
         # Volatility scaling: target a specific vol per asset
         realized_vol = returns.rolling(63).std() * np.sqrt(252)
         vol_scalar = self.config.momentum_vol_target / (realized_vol + 1e-8)
         vol_scalar = vol_scalar.clip(0.1, 3.0)  # Safety bounds
 
-        signals = blended * vol_scalar * trend_filter
+        signals = blended * vol_scalar
 
         return self._clip_signals(signals)
 
