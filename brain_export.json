@@ -1,15 +1,15 @@
 {
   "version": 1,
-  "exported_at": "2026-03-20T18:42:31.652668",
+  "exported_at": "2026-03-20T18:37:57.951558",
   "source": "quant-engine-backtest",
   "backtest_summary": {
-    "total_return": -0.167248,
-    "annualized_return": -0.032892,
-    "sharpe_ratio": -0.5171,
-    "sortino_ratio": -0.4517,
-    "max_drawdown": -0.202059,
-    "win_rate": 0.4213,
-    "profit_factor": 0.8774,
+    "total_return": 0.141403,
+    "annualized_return": 0.024463,
+    "sharpe_ratio": 0.1766,
+    "sortino_ratio": 0.2241,
+    "max_drawdown": -0.231779,
+    "win_rate": 0.4184,
+    "profit_factor": 1.0486,
     "trading_days": 1379
   },
   "model_weights_raw": {
@@ -23,73 +23,73 @@
   "strategies": {
     "Momentum": {
       "weight": 0.9758,
-      "winRate": 0.4213,
+      "winRate": 0.4184,
       "avgPnl": 0,
-      "avgPnlPct": -0.000131,
+      "avgPnlPct": 9.7e-05,
       "trades": 0,
       "recentResults": []
     },
     "MA": {
       "weight": 0.8461,
-      "winRate": 0.4213,
+      "winRate": 0.4184,
       "avgPnl": 0,
-      "avgPnlPct": -0.000131,
+      "avgPnlPct": 9.7e-05,
       "trades": 0,
       "recentResults": []
     },
     "Composite": {
       "weight": 1.9474,
-      "winRate": 0.4213,
+      "winRate": 0.4184,
       "avgPnl": 0,
-      "avgPnlPct": -0.000131,
+      "avgPnlPct": 9.7e-05,
       "trades": 0,
       "recentResults": []
     },
     "MeanRev": {
       "weight": 0.8461,
-      "winRate": 0.4213,
+      "winRate": 0.4184,
       "avgPnl": 0,
-      "avgPnlPct": -0.000131,
+      "avgPnlPct": 9.7e-05,
       "trades": 0,
       "recentResults": []
     },
     "RSI": {
       "weight": 0.8461,
-      "winRate": 0.4213,
+      "winRate": 0.4184,
       "avgPnl": 0,
-      "avgPnlPct": -0.000131,
+      "avgPnlPct": 9.7e-05,
       "trades": 0,
       "recentResults": []
     },
     "Bollinger": {
       "weight": 0.8461,
-      "winRate": 0.4213,
+      "winRate": 0.4184,
       "avgPnl": 0,
-      "avgPnlPct": -0.000131,
+      "avgPnlPct": 9.7e-05,
       "trades": 0,
       "recentResults": []
     },
     "Stochastic": {
       "weight": 0.8461,
-      "winRate": 0.4213,
+      "winRate": 0.4184,
       "avgPnl": 0,
-      "avgPnlPct": -0.000131,
+      "avgPnlPct": 9.7e-05,
       "trades": 0,
       "recentResults": []
     },
     "VWAP": {
       "weight": 0.8461,
-      "winRate": 0.4213,
+      "winRate": 0.4184,
       "avgPnl": 0,
-      "avgPnlPct": -0.000131,
+      "avgPnlPct": 9.7e-05,
       "trades": 0,
       "recentResults": []
     }
   },
   "thresholds": {
-    "slMult": 0.9,
-    "tpMult": 0.9,
-    "entryMult": 1.1
+    "slMult": 1.0,
+    "tpMult": 1.0,
+    "entryMult": 1.0
   },
   "regime": {
     "type": "trending",
