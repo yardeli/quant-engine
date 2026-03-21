@@ -119,11 +119,12 @@ class SignalAggregator:
             rolling_ic = self._compute_rolling_ic(sig, returns)
             # Use mean IC over lookback as the weight
             recent_ic = rolling_ic.iloc[-self.ic_lookback:].mean()
-            ics[name] = max(recent_ic, 0.0)  # Don't give negative weight
+            # Only include models with meaningful IC (> 0.02)
+            ics[name] = recent_ic if recent_ic > 0.02 else 0.0
 
         total_ic = sum(ics.values())
         if total_ic < 1e-8:
-            # All models are bad — fall back to equal weight
+            # All models below threshold — fall back to equal weight
             return self._equal_weight(signals)
 
         weights = {name: ic / total_ic for name, ic in ics.items()}
