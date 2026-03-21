@@ -16,20 +16,22 @@ Maximize annualized return and Sharpe ratio while keeping max drawdown < 20%.
 | Total Costs | $87,308 |
 | Turnover | 132.63x |
 
-## Current Best
+## Final Best (22 iterations)
 | Metric | Value | Delta from Baseline |
 |---|---|---|
-| Total Return | 47.89% | +33.75% |
-| Annualized Return | 7.41% | +4.96% |
-| Sharpe Ratio | 0.49 | +0.31 |
-| Sortino Ratio | 0.63 | +0.41 |
-| Max Drawdown | -19.65% | +3.53% (under 20% target!) |
+| Total Return | 47.89% | **+33.75%** |
+| Annualized Return | 7.41% | **+4.96%** |
+| Sharpe Ratio | 0.49 | **+0.31** |
+| Sortino Ratio | 0.63 | **+0.41** |
+| Max Drawdown | -19.65% | **+3.53%** (under 20% target!) |
 | Win Rate | 42.71% | +0.87% |
 | Profit Factor | 1.11 | +0.06 |
 | Total Costs | $90,009 | +$2,701 |
 | Turnover | 145.76x | +13.13x |
+| Calmar Ratio | 0.38 | +0.27 |
+| Final Equity | $1,478,916 | +$337,514 |
 
-## Iterations
+## All Iterations
 
 | # | Change | Ann. Return | Sharpe | Max DD | Result |
 |---|--------|-------------|--------|--------|--------|
@@ -51,9 +53,20 @@ Maximize annualized return and Sharpe ratio while keeping max drawdown < 20%.
 | 16 | Shorter cov halflife (42d) | 5.87% | 0.39 | -18.92% | DISCARD |
 | 17 | Gross leverage 2.0x | 7.00% | 0.46 | -19.92% | DISCARD |
 | 18 | Min IC floor (0.02) | 1.68% | 0.12 | -23.86% | DISCARD |
+| 19 | Risk aversion 1.25 | 6.55% | 0.43 | -19.65% | DISCARD |
+| 20 | 3-scale momentum blend (10/21/63) | 4.40% | 0.31 | -23.55% | DISCARD |
+| 21 | Increase cov shrinkage to 0.2 | 2.24% | 0.16 | -23.78% | DISCARD |
+| 22 | Mean reversion entry z=1.5 | 3.63% | 0.25 | -21.84% | DISCARD |
 
 ## Kept Changes (Applied Cumulatively)
 1. **Continuous z-score momentum** (iteration 4) — replaced binary sign() with vol-normalized z-scores
 2. **Correlation crash filter** (iteration 7) — reduces momentum exposure during correlation spikes
 3. **Shorter OU lookback** (iteration 8) — 126d vs 252d for faster regime adaptation
 4. **Lower risk aversion** (iteration 14) — 1.5 vs 2.0 for more alpha-seeking optimization
+
+## Key Learnings
+- Risk aversion tuning had the single biggest impact (+1.81% ann. return)
+- Continuous signals >> binary sign() for momentum models
+- Correlation crash protection improves risk-adjusted returns
+- Most "improvements" actually hurt — 18/22 iterations discarded
+- The system converged after ~14 iterations; subsequent changes were marginal
