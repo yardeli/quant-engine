@@ -80,7 +80,7 @@ class PortfolioConfig:
     max_position_size: float = 0.20  # 15% max in any single name
     max_sector_weight: float = 0.40
     max_gross_leverage: float = 1.5
-    max_net_leverage: float = 0.6  # Allow more directional exposure
+    max_net_leverage: float = 0.8  # Allow more directional exposure
     turnover_penalty: float = 0.005  # 50bps turnover cost
     risk_aversion: float = 2.0  # Lambda for mean-variance optimization
     # Rebalance frequency (trading days)
@@ -102,7 +102,7 @@ class RiskConfig:
     # Position / exposure limits
     max_position_size: float = 0.20  # 15% max single name
     max_gross_leverage: float = 1.5
-    max_net_exposure: float = 0.6  # Allow more directional exposure
+    max_net_exposure: float = 0.8  # Allow more directional exposure
 
 
 @dataclass
