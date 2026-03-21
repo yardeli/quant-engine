@@ -179,7 +179,7 @@ class BacktestEngine:
                             cov_matrix = PortfolioOptimizer.estimate_covariance(
                                 lookback_returns,
                                 method="exponential",
-                                halflife=42,
+                                halflife=63,
                             )
 
                             # Optimize portfolio
