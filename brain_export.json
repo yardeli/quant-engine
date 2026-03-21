@@ -1,87 +1,87 @@
 {
   "version": 1,
-  "exported_at": "2026-03-20T19:02:14.875491",
+  "exported_at": "2026-03-20T19:05:43.809898",
   "source": "quant-engine-backtest",
   "backtest_summary": {
-    "total_return": 0.258991,
-    "annualized_return": 0.042985,
-    "sharpe_ratio": 0.2931,
-    "sortino_ratio": 0.3756,
-    "max_drawdown": -0.212465,
+    "total_return": 0.347227,
+    "annualized_return": 0.055976,
+    "sharpe_ratio": 0.3752,
+    "sortino_ratio": 0.4603,
+    "max_drawdown": -0.226277,
     "win_rate": 0.4307,
-    "profit_factor": 1.071,
+    "profit_factor": 1.0892,
     "trading_days": 1379
   },
   "model_weights_raw": {
-    "ts_momentum": 0.217024,
-    "xs_momentum": 0.575513,
-    "momentum_vol_break": 0.167988,
+    "ts_momentum": 0.218465,
+    "xs_momentum": 0.579334,
+    "momentum_vol_break": 0.169104,
     "ou_mean_reversion": 0.0,
-    "pairs_trading": 0.032879,
-    "ml_alpha": 0.006597
+    "pairs_trading": 0.033097,
+    "ml_alpha": 0.0
   },
   "strategies": {
     "Momentum": {
-      "weight": 1.2175,
+      "weight": 1.2245,
       "winRate": 0.4307,
       "avgPnl": 0,
-      "avgPnlPct": 0.000171,
+      "avgPnlPct": 0.000222,
       "trades": 0,
       "recentResults": []
     },
     "MA": {
-      "weight": 0.9424,
+      "weight": 0.9479,
       "winRate": 0.4307,
       "avgPnl": 0,
-      "avgPnlPct": 0.000171,
+      "avgPnlPct": 0.000222,
       "trades": 0,
       "recentResults": []
     },
     "Composite": {
-      "weight": 1.6328,
+      "weight": 1.6237,
       "winRate": 0.4307,
       "avgPnl": 0,
-      "avgPnlPct": 0.000171,
+      "avgPnlPct": 0.000222,
       "trades": 0,
       "recentResults": []
     },
     "MeanRev": {
-      "weight": 0.8415,
+      "weight": 0.8408,
       "winRate": 0.4307,
       "avgPnl": 0,
-      "avgPnlPct": 0.000171,
+      "avgPnlPct": 0.000222,
       "trades": 0,
       "recentResults": []
     },
     "RSI": {
-      "weight": 0.8415,
+      "weight": 0.8408,
       "winRate": 0.4307,
       "avgPnl": 0,
-      "avgPnlPct": 0.000171,
+      "avgPnlPct": 0.000222,
       "trades": 0,
       "recentResults": []
     },
     "Bollinger": {
-      "weight": 0.8415,
+      "weight": 0.8408,
       "winRate": 0.4307,
       "avgPnl": 0,
-      "avgPnlPct": 0.000171,
+      "avgPnlPct": 0.000222,
       "trades": 0,
       "recentResults": []
     },
     "Stochastic": {
-      "weight": 0.8415,
+      "weight": 0.8408,
       "winRate": 0.4307,
       "avgPnl": 0,
-      "avgPnlPct": 0.000171,
+      "avgPnlPct": 0.000222,
       "trades": 0,
       "recentResults": []
     },
     "VWAP": {
-      "weight": 0.8415,
+      "weight": 0.8408,
       "winRate": 0.4307,
       "avgPnl": 0,
-      "avgPnlPct": 0.000171,
+      "avgPnlPct": 0.000222,
       "trades": 0,
       "recentResults": []
     }
